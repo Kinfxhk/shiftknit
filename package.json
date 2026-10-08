@@ -1,7 +1,7 @@
 {
   "name": "shiftknit-monorepo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "ShiftKnit (排更易): free, offline, open-source staff rota builder. Every rota is checked rule by rule by an independent checker.",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://kinfxhk.github.io/shiftknit/",

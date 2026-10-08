@@ -50,7 +50,9 @@ describe('solver properties', () => {
   });
 });
 
-const GOLDEN_HASH = 'fe17cb6136d8223277713410eac7de631b2a3f994a236bbf1b42fa26b23e551f';
+// 0.2.0: hash changed only because engineVersion is part of the output (solver unchanged;
+// the 0.1.0 value fe17cb61… was re-checked with ENGINE_VERSION set back to 0.1.0).
+const GOLDEN_HASH = '9ab6bf70a31195f56009fe2f4366aef6614e8e8121fe16c6f63ac49c6a595b28';
 
 describe('solver edge cases', () => {
   const base = {

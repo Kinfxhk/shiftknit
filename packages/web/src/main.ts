@@ -3,17 +3,39 @@
 // live checking, then export or print. Everything stays in this browser.
 
 import type {
+  AvailabilityReply,
   CheckReport,
+  DayAvailability,
   Explanation,
   Lang,
+  Preference,
   Project,
+  Published,
   Roster,
   Shift,
   Staff,
   VerifiedResult,
 } from '@shiftknit/core';
 import {
+  MAX_PUBLISHED,
+  applyReply,
+  availabilityFormHtml,
+  changesCsv,
   checkRoster,
+  currentPublished,
+  describeChange,
+  diffAvailability,
+  diffRosters,
+  exportBackup,
+  formatMinutes,
+  hoursCsv,
+  importBackup,
+  importProject,
+  parseAvailabilityReplies,
+  shareHtml,
+  staffToReply,
+  validatePublished,
+  weeklyHours,
   describeError,
   describeGap,
   describeUnit,
@@ -22,7 +44,6 @@ import {
   formatDate,
   gapsCsv,
   gridCsv,
-  importProject,
   listCsv,
   parseDate,
   staffCalendar,
@@ -34,7 +55,23 @@ import {
 import sampleText from '../../../examples/small-shop.json?raw';
 import { byId, download, fileName, h } from './dom';
 import { printRestDays, printStaffPages, printTeam } from './print';
-import { loadSettings, loadState, saveSettings, saveState, wipeAll, type Settings } from './store';
+import {
+  loadSettings,
+  loadState,
+  saveSettings,
+  saveState,
+  saveStateSync,
+  hasPending,
+  wipeAll,
+  type Settings,
+} from './store';
+import {
+  loadBackupState,
+  requestPersistence,
+  saveBackupState,
+  shouldRemind,
+  type PersistState,
+} from './safety';
 import { ui, type UiKey } from './strings';
 import type { WorkerRequest, WorkerResponse } from './worker';
 import './styles.css';
@@ -61,6 +98,13 @@ let stopped = false;
 let view: 'grid' | 'week' = settings.view === 'week' ? 'week' : 'grid';
 let timeLimit = [5, 15, 60].includes(settings.timeLimit ?? 0) ? settings.timeLimit! : 15;
 let note = '';
+let published: Published[] = [];
+let replies: AvailabilityReply[] = [];
+let replyError = '';
+let availPerson = '';
+let persistState: PersistState | 'unknown' = 'unknown';
+let persistAsked = false;
+const backupState = loadBackupState();
 
 const T = (key: UiKey, params: Record<string, string | number> = {}) => ui(lang, key, params);
 
@@ -152,7 +196,7 @@ function onWorker(m: WorkerResponse): void {
     explanation = 'working';
     send({ id: ++reqId, kind: 'explain', project, result: r });
   }
-  persist();
+  persist(true);
   renderRota();
   renderExport();
 }
@@ -256,16 +300,76 @@ function loadProject(p: Project, r: Roster | null = null): void {
 
 // ---------- persistence ----------
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
-function persist(): void {
+let dirty = false;
+
+function snapshot(): unknown {
+  return {
+    project,
+    roster,
+    verified: verified && { ...verified, report: null },
+    edited,
+    published,
+  };
+}
+
+/** Write now (after a solve, and when the page is being hidden or closed). */
+function flush(closing = false): void {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    void saveState({
-      project,
-      roster,
-      verified: verified && { ...verified, report: null },
-      edited,
+  if (!dirty) return;
+  dirty = false;
+  const data = snapshot();
+  // A closing page may not finish the asynchronous IndexedDB write: keep a synchronous copy.
+  if (closing) saveStateSync(data);
+  void saveState(data);
+}
+
+/** Save soon (edits are batched for 200 ms); `now` saves immediately. */
+function persist(now = false): void {
+  dirty = true;
+  backupState.changes = (backupState.changes ?? 0) + 1;
+  saveBackupState(backupState);
+  renderReminder();
+  if (!persistAsked) {
+    persistAsked = true;
+    void requestPersistence().then((st) => {
+      persistState = st;
+      renderStorage();
     });
-  }, 200);
+  }
+  clearTimeout(saveTimer);
+  if (now) flush();
+  else saveTimer = setTimeout(flush, 200);
+}
+
+function renderStorage(): void {
+  const el = byId('storage-status');
+  el.dataset.state = persistState;
+  el.textContent =
+    persistState === 'persisted'
+      ? T('storage.persisted')
+      : persistState === 'unsupported'
+        ? T('storage.unsupported')
+        : persistState === 'best-effort'
+          ? T('storage.bestEffort')
+          : '';
+}
+
+function renderReminder(): void {
+  byId('backup-reminder').hidden = !shouldRemind(backupState, Date.now());
+}
+
+function downloadBackup(): void {
+  flush();
+  download(
+    fileName(`${project.name}-backup`, 'json'),
+    exportBackup({ project, roster, published }),
+    'application/json',
+  );
+  backupState.lastBackup = Date.now();
+  backupState.changes = 0;
+  saveBackupState(backupState);
+  renderReminder();
+  byId('import-msg').textContent = T('backup.done');
 }
 
 function storeSettings(): void {
@@ -335,8 +439,9 @@ const hours = (m: number) => Math.round((m / 60) * 100) / 100;
 // ---------- setup ----------
 function renderSetup(): void {
   const host = byId('setup-body');
-  host.replaceChildren(projectForm(), shiftsTable(), staffTable());
+  host.replaceChildren(projectForm(), shiftsTable(), staffTable(), availabilityEditor());
   renderSetupErrors();
+  renderReplies();
 }
 
 function renderSetupErrors(): void {
@@ -861,6 +966,524 @@ function staffTable(): HTMLElement {
   );
 }
 
+// ---------- availability and preferences editor ----------
+function availabilityEditor(): HTMLElement {
+  if (!raw.staff.some((s) => s.id === availPerson)) availPerson = raw.staff[0]?.id ?? '';
+  const person = raw.staff.find((s) => s.id === availPerson);
+  const wds = weekdayNames(lang);
+  const parts: (HTMLElement | null)[] = [
+    h('legend', {}, T('avail.title')),
+    field(
+      T('avail.person'),
+      h(
+        'select',
+        {
+          id: 'av-person',
+          onchange: (e: Event) => {
+            availPerson = (e.target as HTMLSelectElement).value;
+            renderSetup();
+          },
+        },
+        raw.staff.map((s) => h('option', { value: s.id, selected: s.id === availPerson }, s.name)),
+      ),
+    ),
+  ];
+  if (!person) return h('fieldset', { id: 'avail-editor' }, parts);
+  const reply = staffToReply(raw, person.id);
+  const setDay = (d: number, v: DayAvailability) => {
+    const r = staffToReply(raw, person.id);
+    r.days = r.days.map((x, i) => (i === d ? v : x));
+    raw = applyReply(raw, r);
+    commit(true);
+  };
+  const rows = reply.days.map((day, d) => {
+    const mode = day === 'any' ? 'any' : day === 'off' ? 'off' : 'between';
+    const win = Array.isArray(day) ? day[0]! : (['09:00', '17:00'] as [string, string]);
+    const timeInput = (which: 0 | 1) =>
+      h('input', {
+        id: `av-${which ? 'to' : 'from'}-${d}`,
+        type: 'time',
+        value: win[which] === '24:00' ? '00:00' : win[which],
+        disabled: mode !== 'between',
+        'aria-label': `${wds[d]} ${T(which ? 'shifts.end' : 'shifts.start')}`,
+        onchange: (e: Event) => {
+          const v = (e.target as HTMLInputElement).value;
+          if (!v) return;
+          const next: [string, string] = which ? [win[0], v] : [v, win[1]];
+          if (next[0] === next[1]) return;
+          setDay(d, [next]);
+        },
+      });
+    return h(
+      'tr',
+      {},
+      h('th', { scope: 'row' }, wds[d]!),
+      h(
+        'td',
+        {},
+        h(
+          'select',
+          {
+            id: `av-mode-${d}`,
+            'aria-label': `${T('avail.title')}, ${wds[d]}`,
+            onchange: (e: Event) => {
+              const m = (e.target as HTMLSelectElement).value;
+              setDay(d, m === 'any' ? 'any' : m === 'off' ? 'off' : [win]);
+            },
+          },
+          (['any', 'off', 'between'] as const).map((m) =>
+            h('option', { value: m, selected: mode === m }, T(`avail.${m}`)),
+          ),
+        ),
+      ),
+      h('td', {}, timeInput(0), ' – ', timeInput(1)),
+      h('td', {}, Array.isArray(day) && day.length > 1 ? h('small', {}, T('avail.several')) : null),
+    );
+  });
+  parts.push(
+    h(
+      'div',
+      { class: 'scroll' },
+      h('table', { class: 'edit', id: 'avail-table' }, h('tbody', {}, rows)),
+    ),
+    preferencesEditor(person),
+  );
+  return h('fieldset', { id: 'avail-editor' }, parts);
+}
+
+function preferencesEditor(person: Staff): HTMLElement {
+  const wds = weekdayNames(lang);
+  const first = parseDate(raw.start) ?? 0;
+  const dates = Array.from({ length: raw.days }, (_, d) => formatDate(first + d));
+  const whenOf = (p: Preference) =>
+    p.date !== undefined ? `d:${p.date}` : p.weekday !== undefined ? `w${p.weekday}` : '';
+  const rows = person.preferences.map((p, i) =>
+    h(
+      'tr',
+      {},
+      h(
+        'td',
+        {},
+        h(
+          'select',
+          {
+            id: `pf-kind-${i}`,
+            'aria-label': `${T('avail.kind')} ${i + 1}`,
+            onchange: (e: Event) => {
+              p.kind = (e.target as HTMLSelectElement).value === 'want' ? 'want' : 'avoid';
+              commit(true);
+            },
+          },
+          (['want', 'avoid'] as const).map((k) =>
+            h('option', { value: k, selected: p.kind === k }, T(`avail.kind.${k}`)),
+          ),
+        ),
+      ),
+      h(
+        'td',
+        {},
+        h(
+          'select',
+          {
+            id: `pf-shift-${i}`,
+            'aria-label': `${T('avail.shift')} ${i + 1}`,
+            onchange: (e: Event) => {
+              const v = (e.target as HTMLSelectElement).value;
+              if (v) p.shift = v;
+              else delete p.shift;
+              commit(true);
+            },
+          },
+          h('option', { value: '' }, T('avail.anyShift')),
+          raw.shifts.map((sh) =>
+            h('option', { value: sh.id, selected: p.shift === sh.id }, sh.name),
+          ),
+        ),
+      ),
+      h(
+        'td',
+        {},
+        h(
+          'select',
+          {
+            id: `pf-when-${i}`,
+            'aria-label': `${T('avail.when')} ${i + 1}`,
+            onchange: (e: Event) => {
+              const v = (e.target as HTMLSelectElement).value;
+              delete p.date;
+              delete p.weekday;
+              if (v.startsWith('w')) p.weekday = Number(v.slice(1));
+              else if (v.startsWith('d:')) p.date = v.slice(2);
+              commit(true);
+            },
+          },
+          h('option', { value: '', selected: whenOf(p) === '' }, T('avail.everyDay')),
+          wds.map((w, d) => h('option', { value: `w${d}`, selected: whenOf(p) === `w${d}` }, w)),
+          [...new Set([...dates, ...(p.date ? [p.date] : [])])].map((d) =>
+            h(
+              'option',
+              { value: `d:${d}`, selected: whenOf(p) === `d:${d}` },
+              `${wds[weekday(parseDate(d) ?? 0)]} ${d}`,
+            ),
+          ),
+        ),
+      ),
+      h(
+        'td',
+        {},
+        num(
+          `pf-weight-${i}`,
+          p.weight,
+          1,
+          5,
+          1,
+          (v) => ((p.weight = Math.min(5, Math.max(1, Math.round(v)))), commit(true)),
+          `${T('avail.weight')} ${i + 1}`,
+        ),
+      ),
+      h(
+        'td',
+        {},
+        h(
+          'button',
+          {
+            type: 'button',
+            class: 'icon',
+            'aria-label': T('avail.removePref', { n: i + 1 }),
+            onclick: () => {
+              person.preferences.splice(i, 1);
+              commit(true);
+            },
+          },
+          '×',
+        ),
+      ),
+    ),
+  );
+  return h(
+    'div',
+    { class: 'prefs' },
+    h('h3', {}, T('avail.prefs')),
+    rows.length
+      ? h(
+          'div',
+          { class: 'scroll' },
+          h(
+            'table',
+            { class: 'edit', id: 'pref-table' },
+            h(
+              'thead',
+              {},
+              h(
+                'tr',
+                {},
+                [T('avail.kind'), T('avail.shift'), T('avail.when'), T('avail.weight'), ''].map(
+                  (c) => h('th', { scope: 'col' }, c),
+                ),
+              ),
+            ),
+            h('tbody', {}, rows),
+          ),
+        )
+      : h('p', { class: 'note' }, T('avail.noPrefs')),
+    h(
+      'button',
+      {
+        type: 'button',
+        id: 'add-pref',
+        disabled: person.preferences.length >= 200,
+        onclick: () => {
+          person.preferences.push({ kind: 'want', weight: 3 });
+          commit(true);
+        },
+      },
+      T('avail.addPref'),
+    ),
+  );
+}
+
+// ---------- availability replies ----------
+async function readReplies(text: string): Promise<void> {
+  const r = parseAvailabilityReplies(text, project);
+  if (r.ok) {
+    replies = r.value;
+    replyError = replies.length ? '' : T('collect.none');
+  } else {
+    replies = [];
+    replyError = `${T('collect.failed')} ${r.errors
+      .slice(0, 3)
+      .map((x) => describeError(lang, x))
+      .join('; ')}`;
+  }
+  renderReplies();
+}
+
+function applyOne(r: AvailabilityReply): void {
+  raw = applyReply(raw, r);
+  replies = replies.filter((x) => x !== r);
+  commit(true);
+  const name = project.staff.find((s) => s.id === r.staff)?.name ?? r.staff;
+  replyError = T('collect.applied', { name });
+  renderReplies();
+}
+
+function renderReplies(): void {
+  const box = byId('reply-result');
+  const wds = weekdayNames(lang);
+  const parts: HTMLElement[] = [];
+  if (replyError) parts.push(h('p', { id: 'reply-msg' }, replyError));
+  const label = (f: string, wd?: number) =>
+    f === 'day' ? wds[wd ?? 0]! : T(`collect.field.${f as 'leave' | 'avoid' | 'note'}`);
+  for (const [i, r] of replies.entries()) {
+    const name = project.staff.find((s) => s.id === r.staff)?.name ?? r.staff;
+    const diff = diffAvailability(lang, project, r);
+    parts.push(
+      h(
+        'div',
+        { class: 'reply', 'data-staff': r.staff },
+        h('h4', {}, T('collect.from', { name })),
+        diff.length
+          ? h(
+              'ul',
+              {},
+              diff.map((d) =>
+                h(
+                  'li',
+                  {},
+                  d.field === 'note'
+                    ? `${label('note')}: ${d.after}`
+                    : `${label(d.field, d.weekday)}: ${d.before} → ${d.after}`,
+                ),
+              ),
+            )
+          : h('p', { class: 'note' }, T('collect.same')),
+        h(
+          'button',
+          {
+            type: 'button',
+            id: `reply-apply-${i}`,
+            disabled: !diff.some((d) => d.field !== 'note'),
+            onclick: () => applyOne(r),
+          },
+          T('collect.apply'),
+        ),
+      ),
+    );
+  }
+  if (replies.length > 1)
+    parts.push(
+      h(
+        'button',
+        {
+          type: 'button',
+          id: 'reply-apply-all',
+          onclick: () => {
+            for (const r of replies) raw = applyReply(raw, r);
+            replies = [];
+            replyError = '';
+            commit(true);
+          },
+        },
+        T('collect.applyAll'),
+      ),
+    );
+  box.replaceChildren(...parts);
+}
+
+// ---------- weekly hours ----------
+function renderHours(): void {
+  const box = byId('hours-body');
+  if (!roster) {
+    box.replaceChildren(h('p', { class: 'note' }, T('hours.none')));
+    return;
+  }
+  const t = weeklyHours(project, roster);
+  box.replaceChildren(
+    h(
+      'div',
+      { class: 'scroll' },
+      h(
+        'table',
+        { class: 'hours', id: 'hours-table' },
+        h(
+          'thead',
+          {},
+          h(
+            'tr',
+            {},
+            h('th', { scope: 'col' }, T('hours.person')),
+            t.weeks.map((w) => h('th', { scope: 'col' }, T('hours.week', { date: w }))),
+            h('th', { scope: 'col' }, T('hours.total')),
+            h('th', { scope: 'col' }, T('hours.shifts')),
+          ),
+        ),
+        h(
+          'tbody',
+          {},
+          t.rows.map((r) =>
+            h(
+              'tr',
+              { 'data-staff': r.staff },
+              h('th', { scope: 'row' }, r.name),
+              r.minutes.map((m) => h('td', {}, formatMinutes(lang, m))),
+              h('td', { class: 'total' }, formatMinutes(lang, r.total)),
+              h('td', {}, String(r.shifts)),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+// ---------- publish ----------
+function fmtInstant(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat(lang === 'zh-HK' ? 'zh-HK' : 'en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: project.timeZone,
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+/** The latest non-withdrawn version published before version n. */
+function previousOf(n: number): Published | undefined {
+  return currentPublished(published.filter((v) => v.n < n));
+}
+
+function versionShare(v: Published): string {
+  const prev = previousOf(v.n);
+  return shareHtml(v.project, v.roster, {
+    lang,
+    version: VERSION,
+    at: fmtInstant(v.at),
+    published: v.n,
+    ...(prev ? { changes: { since: prev.n, list: diffRosters(prev.roster, v.roster) } } : {}),
+  });
+}
+
+function renderPublish(): void {
+  const cur = currentPublished(published);
+  byId<HTMLButtonElement>('publish-btn').disabled = !roster;
+  byId<HTMLButtonElement>('withdraw-btn').disabled = !cur;
+  const pending = byId('pending');
+  const changes = cur && roster ? diffRosters(cur.roster, roster) : [];
+  byId<HTMLButtonElement>('changes-csv').disabled = !cur || !roster || changes.length === 0;
+  if (!cur) pending.replaceChildren(h('p', { class: 'note' }, T('publish.first')));
+  else if (!roster) pending.replaceChildren();
+  else
+    pending.replaceChildren(
+      h(
+        'p',
+        { id: 'pending-summary' },
+        changes.length
+          ? T('publish.pending', { n: cur.n, count: changes.length })
+          : T('publish.pendingNone', { n: cur.n }),
+      ),
+      h(
+        'ul',
+        { id: 'pending-list' },
+        changes.slice(0, 50).map((c) => h('li', {}, describeChange(lang, project, c))),
+        changes.length > 50 ? h('li', {}, T('publish.more', { n: changes.length - 50 })) : null,
+      ),
+    );
+  const list = byId('versions');
+  if (published.length === 0) {
+    list.replaceChildren(h('li', { class: 'note' }, T('publish.none')));
+    return;
+  }
+  list.replaceChildren(
+    ...[...published].reverse().map((v) =>
+      h(
+        'li',
+        { 'data-version': String(v.n), class: v.withdrawn ? 'withdrawn' : '' },
+        T('publish.version', { n: v.n, at: fmtInstant(v.at) }),
+        ' ',
+        v.withdrawn ? T('publish.withdrawn') : v === cur ? T('publish.current') : '',
+        ' ',
+        h(
+          'button',
+          {
+            type: 'button',
+            id: `share-v${v.n}`,
+            onclick: () =>
+              download(
+                fileName(`${v.project.name}-v${v.n}`, 'html'),
+                versionShare(v),
+                'text/html;charset=utf-8',
+              ),
+          },
+          T('publish.share'),
+        ),
+      ),
+    ),
+  );
+}
+
+function publishNow(): void {
+  if (!roster) return;
+  const report = checkRoster(project, roster);
+  if (
+    report.violations.length &&
+    !confirm(T('publish.confirmBroken', { n: report.violations.length }))
+  )
+    return;
+  const n = (published[published.length - 1]?.n ?? 0) + 1;
+  published = [
+    ...published,
+    {
+      n,
+      at: new Date().toISOString(),
+      project: structuredClone(project),
+      roster: structuredClone(roster),
+      withdrawn: false,
+    },
+  ].slice(-MAX_PUBLISHED);
+  byId('publish-status').textContent = T('publish.done', { n });
+  persist(true);
+  renderPublish();
+}
+
+function withdrawLatest(): void {
+  const cur = currentPublished(published);
+  if (!cur || !confirm(T('publish.confirmWithdraw', { n: cur.n }))) return;
+  published = published.map((v) => (v === cur ? { ...v, withdrawn: true } : v));
+  byId('publish-status').textContent = T('publish.withdrawnDone', { n: cur.n });
+  persist(true);
+  renderPublish();
+}
+
+function nextPeriod(): void {
+  const first = parseDate(project.start);
+  if (first === undefined) return;
+  const shift = (date: string) => formatDate((parseDate(date) ?? 0) + project.days);
+  const moved = (roster?.assignments ?? []).map((a) => ({ ...a, date: shift(a.date) }));
+  const seen = new Set<string>();
+  raw.previous = moved
+    .filter((a) => {
+      const k = `${a.staff}|${a.date}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .map((a) => ({ staff: a.staff, date: a.date, shift: a.shift }));
+  raw.locks = [];
+  raw.start = formatDate(first + project.days);
+  commit(true);
+  if (setupErrors.length) return;
+  roster = moved.length ? prune({ assignments: moved }) : null;
+  verified = null;
+  edited = roster !== null;
+  explanation = undefined;
+  note = T('rota.nextDone', { date: project.start });
+  persist(true);
+  renderRota();
+  renderExport();
+}
+
 // ---------- rota ----------
 function currentReport(): CheckReport | null {
   return roster ? checkRoster(project, roster) : null;
@@ -915,6 +1538,8 @@ function renderRota(): void {
   byId('rota-view').replaceChildren(view === 'grid' ? gridView(report) : weekView(report));
   if (active) document.getElementById(active)?.focus();
   renderCheck(report);
+  renderHours();
+  renderPublish();
 }
 
 function renderExplain(): void {
@@ -1225,6 +1850,8 @@ function renderExport(): void {
     'csv-list',
     'csv-gaps',
     'json-rota',
+    'csv-hours',
+    'share-btn',
     'ics-btn',
     'print-team',
     'print-staff',
@@ -1274,6 +1901,8 @@ function renderAll(): void {
   renderSetup();
   renderRota();
   renderExport();
+  renderStorage();
+  renderReminder();
 }
 
 function wire(): void {
@@ -1306,10 +1935,14 @@ function wire(): void {
       msg.textContent = `${T('setup.importFailed')} > 1 MB`;
       return;
     }
-    const r = importProject(await file.text());
+    const r = importBackup(await file.text());
     if (r.ok) {
-      loadProject(r.value);
-      byId('import-msg').textContent = T('setup.imported');
+      const isBackup = r.value.roster !== null || r.value.published.length > 0;
+      if (isBackup) published = r.value.published;
+      loadProject(r.value.project, r.value.roster);
+      byId('import-msg').textContent = isBackup
+        ? T('setup.restored', { n: published.length })
+        : T('setup.imported');
     } else
       msg.textContent = `${T('setup.importFailed')} ${r.errors
         .slice(0, 3)
@@ -1320,8 +1953,56 @@ function wire(): void {
     if (!confirm(T('setup.deleteConfirm'))) return;
     stopSolve();
     clearTimeout(saveTimer);
+    dirty = false;
     await wipeAll();
     location.reload();
+  });
+  byId('backup-btn').addEventListener('click', downloadBackup);
+  byId('remind-backup').addEventListener('click', downloadBackup);
+  byId('remind-dismiss').addEventListener('click', () => {
+    backupState.dismissed = Date.now();
+    saveBackupState(backupState);
+    renderReminder();
+  });
+  byId('form-btn').addEventListener('click', () =>
+    download(
+      fileName(`${project.name}-availability-form`, 'html'),
+      availabilityFormHtml(lang, project, VERSION),
+      'text/html;charset=utf-8',
+    ),
+  );
+  byId('reply-read').addEventListener('click', () =>
+    readReplies(byId<HTMLTextAreaElement>('reply-text').value),
+  );
+  byId('reply-file').addEventListener('change', async (e) => {
+    const input = e.target as HTMLInputElement;
+    const files = [...(input.files ?? [])].slice(0, 62);
+    input.value = '';
+    if (files.some((f) => f.size > 200_000)) {
+      replies = [];
+      replyError = `${T('collect.failed')} > 200 KB`;
+      renderReplies();
+      return;
+    }
+    const texts = await Promise.all(files.map((f) => f.text()));
+    await readReplies(texts.join('\n'));
+  });
+  byId('next-btn').addEventListener('click', nextPeriod);
+  byId('publish-btn').addEventListener('click', publishNow);
+  byId('withdraw-btn').addEventListener('click', withdrawLatest);
+  byId('changes-csv').addEventListener('click', () => {
+    const cur = currentPublished(published);
+    if (!cur || !roster) return;
+    download(
+      fileName(`${project.name}-changes-since-v${cur.n}`, 'csv'),
+      changesCsv(lang, project, diffRosters(cur.roster, roster)),
+      'text/csv;charset=utf-8',
+    );
+  });
+  // Save at once when the page is hidden or closed (edits are otherwise batched).
+  addEventListener('pagehide', () => flush(true));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flush(true);
   });
   byId('solve-btn').addEventListener('click', startSolve);
   byId('stop-btn').addEventListener('click', stopSolve);
@@ -1378,6 +2059,24 @@ function wire(): void {
   byId('json-project').addEventListener('click', () =>
     download(fileName(base(), 'json'), exportProject(project), 'application/json'),
   );
+  byId('csv-hours').addEventListener('click', () =>
+    withRoster((r) =>
+      download(
+        fileName(`${base()}-hours`, 'csv'),
+        hoursCsv(lang, project, r),
+        'text/csv;charset=utf-8',
+      ),
+    ),
+  );
+  byId('share-btn').addEventListener('click', () =>
+    withRoster((r) =>
+      download(
+        fileName(`${base()}-rota`, 'html'),
+        shareHtml(project, r, { lang, version: VERSION, at: fmtInstant(new Date().toISOString()) }),
+        'text/html;charset=utf-8',
+      ),
+    ),
+  );
   byId('json-rota').addEventListener('click', () =>
     withRoster((r) =>
       download(
@@ -1417,7 +2116,13 @@ function wire(): void {
 
 async function init(): Promise<void> {
   const saved = (await loadState()) as
-    | { project?: unknown; roster?: unknown; verified?: VerifiedResult | null; edited?: boolean }
+    | {
+        project?: unknown;
+        roster?: unknown;
+        verified?: VerifiedResult | null;
+        edited?: boolean;
+        published?: unknown;
+      }
     | undefined;
   if (saved && typeof saved === 'object' && saved.project) {
     const p = validateProject(saved.project);
@@ -1440,6 +2145,24 @@ async function init(): Promise<void> {
         verified = v;
       edited = roster !== null && verified === null;
     }
+    const pub = validatePublished(saved.published ?? []);
+    if (pub.ok) published = pub.value;
+  }
+  try {
+    const st = navigator.storage;
+    persistState =
+      st && typeof st.persisted === 'function'
+        ? (await st.persisted())
+          ? 'persisted'
+          : 'best-effort'
+        : 'unsupported';
+  } catch {
+    persistState = 'best-effort';
+  }
+  if (hasPending()) {
+    // The last session closed before IndexedDB finished: store the safety copy properly.
+    dirty = true;
+    flush();
   }
   wire();
   renderAll();

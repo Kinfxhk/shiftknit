@@ -1,0 +1,138 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Text used inside the files ShiftKnit writes for other people (the read-only share file
+// and the availability form). Both languages must have the same keys (tested).
+
+import type { Lang } from '../i18n/index';
+
+const en = {
+  'share.title': 'Rota (read-only copy)',
+  'share.period': 'Period: {from} – {to} ({tz})',
+  'share.published': 'Published version {n}, {at}',
+  'share.draft': 'Not published yet (draft copy, {at})',
+  'share.team': 'Whole team',
+  'share.byShift': 'Who is working, by shift',
+  'share.people': 'Each person',
+  'share.person': 'Person',
+  'share.off': 'off',
+  'share.hours': 'Hours',
+  'share.week': 'Week from {date}',
+  'share.total': 'Total',
+  'share.noShifts': 'No shifts in this period.',
+  'share.changes': 'Changes since version {n}',
+  'share.noChanges': 'No changes since version {n}.',
+  'share.change': '{name}, {date}: {before} → {after}',
+  'share.footer':
+    'Made with ShiftKnit {version}. This is a read-only copy: if anything looks wrong, ask the person who sent it. It makes no network requests.',
+  'share.jump': 'Jump to a person',
+  'form.title': 'Availability form',
+  'form.intro':
+    'Fill in when you can work in the period {from} – {to}. Nothing is sent anywhere: press "Make my reply", then send the reply text or file back to {project}.',
+  'form.who': 'Your name',
+  'form.pick': 'Choose your name',
+  'form.day': 'Day',
+  'form.any': 'Any time',
+  'form.offDay': 'Not available',
+  'form.between': 'Only between',
+  'form.from': 'from',
+  'form.to': 'to',
+  'form.avoid': 'Prefer not to work',
+  'form.leave': 'Leave or days off in this period (dates)',
+  'form.leaveHint': 'One date per line or separated by commas, for example {example}',
+  'form.note': 'Note for the manager (optional)',
+  'form.make': 'Make my reply',
+  'form.copy': 'Copy reply',
+  'form.download': 'Download reply file',
+  'form.copied': 'Copied. Paste it into a message to your manager.',
+  'form.reply': 'Your reply (send this back)',
+  'form.errorName': 'Please choose your name first.',
+  'form.errorTime': 'Check the times on {day}: use HH:MM, for example 09:00.',
+  'form.errorDate': 'Check the leave dates: "{date}" is not a date in this period.',
+  'form.privacy': 'This form works offline and makes no network requests.',
+  'change.added': 'added',
+  'change.removed': 'removed',
+  'avail.any': 'any time',
+  'avail.off': 'not available',
+  'avail.days': 'Availability, {day}',
+  'avail.leave': 'Leave',
+  'avail.avoid': 'Prefers not to work',
+  'avail.note': 'Note',
+  'avail.none': 'none',
+  'hours.person': 'Person',
+  'hours.week': 'Week from {date}',
+  'hours.total': 'Total hours',
+  'hours.shifts': 'Shifts',
+};
+
+type Catalogue = Record<keyof typeof en, string>;
+
+const zh: Catalogue = {
+  'share.title': '更表（唯讀副本）',
+  'share.period': '期間：{from} 至 {to}（{tz}）',
+  'share.published': '已發佈第 {n} 版，{at}',
+  'share.draft': '未發佈（草稿副本，{at}）',
+  'share.team': '全隊更表',
+  'share.byShift': '每更當值人員',
+  'share.people': '每人更表',
+  'share.person': '員工',
+  'share.off': '休',
+  'share.hours': '工時',
+  'share.week': '{date} 起一週',
+  'share.total': '合計',
+  'share.noShifts': '此期間沒有更份。',
+  'share.changes': '與第 {n} 版比較的改動',
+  'share.noChanges': '與第 {n} 版比較沒有改動。',
+  'share.change': '{name}，{date}：{before} → {after}',
+  'share.footer':
+    '由排更易 ShiftKnit {version} 製作。這是唯讀副本，如有疑問請向發送者查詢。此檔案不會連接網絡。',
+  'share.jump': '跳到個人更表',
+  'form.title': '可工作時間收集表',
+  'form.intro':
+    '請填寫你在 {from} 至 {to} 期間可以上班的時間。資料不會自動傳送：按「製作回覆」，再把回覆文字或檔案交回 {project}。',
+  'form.who': '你的名字',
+  'form.pick': '請選擇你的名字',
+  'form.day': '日子',
+  'form.any': '任何時間',
+  'form.offDay': '不能上班',
+  'form.between': '只限',
+  'form.from': '由',
+  'form.to': '至',
+  'form.avoid': '希望不用上班',
+  'form.leave': '此期間的假期或休息日（日期）',
+  'form.leaveHint': '每行一個日期，或用逗號分隔，例如 {example}',
+  'form.note': '給經理的備註（可選）',
+  'form.make': '製作回覆',
+  'form.copy': '複製回覆',
+  'form.download': '下載回覆檔',
+  'form.copied': '已複製，請貼到訊息交給經理。',
+  'form.reply': '你的回覆（請交回）',
+  'form.errorName': '請先選擇你的名字。',
+  'form.errorTime': '請檢查{day}的時間，格式為 HH:MM，例如 09:00。',
+  'form.errorDate': '請檢查假期日期：「{date}」不是此期間內的日期。',
+  'form.privacy': '此表格可離線使用，不會連接網絡。',
+  'change.added': '新增',
+  'change.removed': '刪除',
+  'avail.any': '任何時間',
+  'avail.off': '不能上班',
+  'avail.days': '可工作時間（{day}）',
+  'avail.leave': '假期',
+  'avail.avoid': '希望不用上班',
+  'avail.note': '備註',
+  'avail.none': '無',
+  'hours.person': '員工',
+  'hours.week': '{date} 起一週',
+  'hours.total': '總工時',
+  'hours.shifts': '更數',
+};
+
+export const SHARE_TEXT: Record<Lang, Catalogue> = { en, 'zh-HK': zh };
+export type ShareKey = keyof typeof en;
+
+export function st(
+  lang: Lang,
+  key: ShareKey,
+  params: Record<string, string | number> = {},
+): string {
+  return SHARE_TEXT[lang][key].replace(/\{(\w+)\}/g, (m, k: string) =>
+    k in params ? String(params[k]) : m,
+  );
+}

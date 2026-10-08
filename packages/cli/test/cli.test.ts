@@ -123,6 +123,6 @@ describe('shiftknit CLI', () => {
         encoding: 'utf8',
       },
     );
-    expect(out.trim()).toBe('0.1.0');
+    expect(out.trim()).toBe('0.2.0');
   });
 });

@@ -33,8 +33,29 @@ npm start   # builds the site and serves it at http://127.0.0.1:4883/
    weekday, and an optional skill need ("must include at least 1 keyholder").
 4. **Staff** (up to 30): name or code, skills, maximum and minimum hours per week,
    maximum days in a row, leave dates, and weekdays they prefer not to work.
-   Availability windows and other preferences can be set in the project file (see
-   the examples).
+5. **Availability and preferences:** pick a person, then for each weekday choose
+   _any time_, _not available_ or _only between_ two times (the whole shift must fit
+   inside; an end at or before the start means the next day). Add preferences: wants
+   to work or prefers not to, any shift or one shift, every day, a weekday or a date,
+   strength 1–5. Several windows on one day can still be set in the project file.
+
+### Collect availability from staff (no server)
+
+1. **Download availability form**: one HTML file with the names on this project and
+   each person's current settings. Send it to your staff, for example in a chat app.
+2. Each person opens it (it works offline and makes no network requests), chooses
+   their name, fills in each weekday, leave dates and a note, and presses **Make my
+   reply**. They send back the reply text (copy) or the reply file (download).
+3. Paste the replies (several at once is fine, chat text around them is ignored) or
+   open the reply files, then **Check replies**. Each reply shows exactly what would
+   change (e.g. "Mon: any time → not available"). Nothing changes until you press
+   **Apply**. Replies are checked like project files: a reply for another period, an
+   unknown person, impossible times or dates outside the period are refused.
+4. "Not available on any day" is stored as leave on every date of the period, because
+   an empty availability list means "always available".
+
+Anyone who has the form can write a reply in any name: check that a reply really
+comes from that person (for example, from their own chat account) before applying it.
 
 Use **Load sample** to try a small café, or open one of the files in `examples/`:
 `small-shop.json`, `care-home-nights.json` (12-hour day and night shifts) and
@@ -108,9 +129,31 @@ shows who works each shift.
   spreadsheets cannot run it as a formula.
 - **Calendar file (.ics)** per person, for phone calendars. Times are written in UTC, so
   overnight shifts and clock changes are exact.
-- **Project file (.json)** to back up or share your set-up, and **Rota (.json)**.
+- **Project file (.json)** to share your set-up, and **Rota (.json)**.
+- **Hours CSV**: worked hours (break excluded) per person per week, total and number of
+  shifts. The same table is shown under the rule check. Weeks start on the project's
+  week-start day, as in the weekly-hours rule.
+- **Share file (.html, read-only)**: one self-contained page with the whole team, who
+  is on each shift, and each person's shifts and weekly hours. It has no scripts, loads
+  nothing from the internet and can be forwarded in a chat app or opened offline.
 - **Print:** team rota, one page per person, and a **rest-day roster** listing each
   person's rest days for posting in advance.
+
+### Publish and change lists
+
+**Publish this rota** saves a numbered copy (version 1, 2, 3 …) in this browser, with
+the project as it was. After that, the page lists every change since the current
+version ("Ada, 2026-11-03: Opening → off"); **Changes CSV** downloads the list. Each
+version has its own share file, which includes the changes since the version before
+it. **Withdraw the latest version** marks it withdrawn so the earlier version becomes
+current again. Withdrawing cannot delete copies you have already sent: send the new
+share file instead. Up to 20 versions are kept.
+
+### Next period
+
+**Copy to next period** moves the period forward by its length, copies the rota there
+as a draft (checked live like any edit) and keeps it as the "previous rota" so that a
+re-solve stays close to it. Check leave and availability for the new dates.
 
 ## 6. Command line
 
@@ -129,11 +172,19 @@ unless the time limit is reached.
 
 ## 7. Your data
 
-The project and rota are stored in this browser (IndexedDB); display settings in
-`localStorage`. **Delete all data on this device** removes both. ShiftKnit makes no
-requests to any other site.
+The project, rota and published versions are stored in this browser (IndexedDB);
+display settings and the backup reminder in `localStorage`. Changes are saved at once
+when you leave or reload the page. **Delete all data on this device** removes
+everything. ShiftKnit makes no requests to any other site.
 
-## 8. Limits in v0.1
+Browsers can clear saved data, for example when the device runs low on space. ShiftKnit
+asks the browser to keep its data (`navigator.storage.persist()`); the line under the
+set-up buttons says whether the browser agreed. Either way, use **Download full
+backup** now and then: one JSON file with the project, rota and published versions.
+After many changes without a backup, a reminder appears at the top (dismiss it for 7
+days with **Not now**). To restore, open the backup with **Open project file**.
+
+## 8. Limits
 
 30 staff, 31 days, 6 shifts, 8 skills, one shift per person per day. No logins, shift
 swapping, payroll or notifications.

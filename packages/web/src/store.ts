@@ -6,6 +6,10 @@ const DB = 'shiftknit';
 const STORE = 'kv';
 const KEY = 'current';
 export const SETTINGS_KEY = 'shiftknit-settings';
+/** Synchronous safety copy written when the page is hidden or closed (IndexedDB is
+ * asynchronous and a closing page may not finish the write). Removed after each completed
+ * IndexedDB save, and preferred on the next load when present. */
+export const PENDING_KEY = 'shiftknit-pending';
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -17,6 +21,12 @@ function openDb(): Promise<IDBDatabase> {
 }
 
 export async function loadState(): Promise<unknown> {
+  try {
+    const pending = localStorage.getItem(PENDING_KEY);
+    if (pending) return JSON.parse(pending) as unknown;
+  } catch {
+    /* fall back to IndexedDB */
+  }
   try {
     const db = await openDb();
     return await new Promise((resolve, reject) => {
@@ -40,6 +50,11 @@ export async function saveState(value: unknown): Promise<void> {
       tx.objectStore(STORE).put(value, KEY);
       tx.oncomplete = () => {
         db.close();
+        try {
+          localStorage.removeItem(PENDING_KEY);
+        } catch {
+          /* ignore */
+        }
         resolve();
       };
       tx.onerror = () => reject(tx.error ?? new Error('IndexedDB write failed'));
@@ -49,9 +64,29 @@ export async function saveState(value: unknown): Promise<void> {
   }
 }
 
+export function hasPending(): boolean {
+  try {
+    return localStorage.getItem(PENDING_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Write the safety copy synchronously; false when it does not fit or storage is off. */
+export function saveStateSync(value: unknown): boolean {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function wipeAll(): Promise<void> {
   try {
+    localStorage.removeItem(PENDING_KEY);
     localStorage.removeItem(SETTINGS_KEY);
+    localStorage.removeItem('shiftknit-backup');
   } catch {
     /* ignore */
   }

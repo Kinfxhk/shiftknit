@@ -46,6 +46,13 @@
       </div>
     </header>
 
+    <div id="backup-reminder" class="reminder" role="status" hidden>
+      <p data-t="backup.remind">You have made many changes since your last backup.</p>
+      <button type="button" id="remind-backup" class="primary" data-t="backup.download">
+        Download full backup
+      </button>
+      <button type="button" id="remind-dismiss" data-t="backup.dismiss">Not now</button>
+    </div>
     <main>
       <section id="setup" aria-labelledby="setup-title">
         <h2 id="setup-title" data-t="setup.title">1. Set up</h2>
@@ -56,13 +63,40 @@
             ><span data-t="setup.import">Open project file</span>
             <input type="file" id="import-file" accept=".json,application/json"
           /></label>
+          <button type="button" id="backup-btn" data-t="backup.download">
+            Download full backup
+          </button>
           <button type="button" id="delete-btn" class="danger" data-t="setup.delete">
             Delete all data on this device
           </button>
           <span id="import-msg" role="status"></span>
         </div>
         <div id="setup-errors" class="errors" role="alert" hidden></div>
+        <p id="storage-status" class="note" role="status"></p>
         <div id="setup-body"></div>
+        <fieldset id="collect">
+          <legend data-t="collect.title">Collect availability from staff</legend>
+          <p class="note" data-t="collect.intro">Intro</p>
+          <div class="toolbar">
+            <button type="button" id="form-btn" data-t="collect.form">
+              Download availability form
+            </button>
+            <label class="file-btn"
+              ><span data-t="collect.files">Open reply files</span>
+              <input
+                type="file"
+                id="reply-file"
+                multiple
+                accept=".json,.txt,application/json,text/plain"
+            /></label>
+          </div>
+          <label for="reply-text" data-t="collect.paste">Or paste replies here</label>
+          <textarea id="reply-text" rows="3" spellcheck="false"></textarea>
+          <div class="toolbar">
+            <button type="button" id="reply-read" data-t="collect.read">Check replies</button>
+          </div>
+          <div id="reply-result" aria-live="polite"></div>
+        </fieldset>
         <datalist id="tz-list">
           <option value="Asia/Hong_Kong"></option>
           <option value="Asia/Macau"></option>
@@ -94,6 +128,7 @@
           <button type="button" id="stop-btn" hidden data-t="rota.stop">Stop</button>
           <button type="button" id="clear-btn" data-t="rota.clear">Clear rota</button>
           <button type="button" id="unlock-btn" data-t="rota.unlock">Unlock all</button>
+          <button type="button" id="next-btn" data-t="rota.next">Copy to next period</button>
           <span class="views" role="group">
             <button type="button" id="view-grid" aria-pressed="true" data-t="rota.viewGrid">
               Staff × days
@@ -110,6 +145,10 @@
           <h3 id="check-title" data-t="check.title">Rule check</h3>
           <div id="check-body" aria-live="polite"></div>
         </section>
+        <section id="hours" class="hours-panel" aria-labelledby="hours-title">
+          <h3 id="hours-title" data-t="hours.title">Weekly hours</h3>
+          <div id="hours-body"></div>
+        </section>
       </section>
 
       <section id="export" aria-labelledby="export-title">
@@ -120,6 +159,8 @@
           <button type="button" id="csv-gaps" data-t="export.csvGaps">CSV</button>
           <button type="button" id="json-project" data-t="export.json">Project file</button>
           <button type="button" id="json-rota" data-t="export.rota">Rota</button>
+          <button type="button" id="csv-hours" data-t="export.csvHours">Hours CSV</button>
+          <button type="button" id="share-btn" data-t="export.share">Share file</button>
         </div>
         <div class="toolbar">
           <label
@@ -136,6 +177,23 @@
           <button type="button" id="print-rest" data-t="export.printRest">Print rest days</button>
         </div>
         <p id="export-msg" class="note" role="status"></p>
+      </section>
+      <section id="publish" aria-labelledby="publish-title">
+        <h2 id="publish-title" data-t="publish.title">4. Publish</h2>
+        <p class="note" data-t="publish.intro">Intro</p>
+        <div class="toolbar">
+          <button type="button" id="publish-btn" class="primary" data-t="publish.publish">
+            Publish this rota
+          </button>
+          <button type="button" id="withdraw-btn" data-t="publish.withdraw">
+            Withdraw the latest version
+          </button>
+          <button type="button" id="changes-csv" data-t="publish.changesCsv">Changes CSV</button>
+        </div>
+        <div id="publish-status" role="status" aria-live="polite"></div>
+        <div id="pending"></div>
+        <h3 data-t="publish.versions">Published versions</h3>
+        <ol id="versions"></ol>
       </section>
     </main>
 

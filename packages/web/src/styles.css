@@ -483,3 +483,52 @@ dl.penalty dd {
     font-size: 8pt;
   }
 }
+
+/* v0.2: backup reminder, availability collection, hours, publishing */
+.reminder {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  background: var(--gap-bg);
+  color: var(--text);
+  border-bottom: 1px solid var(--line);
+}
+.reminder p {
+  margin: 0;
+  flex: 1 1 20rem;
+}
+#collect textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+.reply {
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  margin: 0.5rem 0;
+}
+.reply h4 {
+  margin: 0.2rem 0;
+}
+table.hours td,
+table.hours th {
+  padding: 0.25rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+table.hours td.total {
+  font-weight: 600;
+}
+#versions li.withdrawn {
+  color: var(--muted);
+}
+#versions li {
+  margin: 0.3rem 0;
+}
+.reminder[hidden] {
+  display: none;
+}
