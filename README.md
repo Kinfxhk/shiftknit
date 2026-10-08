@@ -1,11 +1,5 @@
 # ShiftKnit · 排更易
 
-> **Status: in development — not released yet.** There is no release and no
-> download. Follow progress in the commit history; do not use it for real rotas
-> until v0.1.0 is published.
->
-> **狀態：開發中，尚未發佈。** 現時沒有正式版本或下載，請勿用於實際排更。
-
 **English** · [繁體中文](#繁體中文)
 
 ![ShiftKnit: a two-week café rota in the staff × days grid, with the rule check passed](docs/screenshot.png)
@@ -26,8 +20,10 @@ conflict it found).
 
 ### Use it
 
-- **In the browser:** the web version will be linked here when v0.1.0 is released.
-  It works offline after the first visit.
+- **In the browser:** <https://kinfxhk.github.io/shiftknit/> — nothing to install,
+  and it works offline after the first visit. Your data stays in your browser.
+- **Download:** a static site zip (with SHA-256) is attached to each
+  [release](https://github.com/Kinfxhk/shiftknit/releases).
 - **On your own computer** (Node.js 22+):
 
 ```sh
@@ -78,7 +74,8 @@ If ShiftKnit helps you, you can support it at
 
 ### 使用方法
 
-- **瀏覽器：**v0.1.0 發佈後會在此列出網上版連結，首次瀏覽後可離線使用。
+- **瀏覽器：**<https://kinfxhk.github.io/shiftknit/>，無需安裝，首次瀏覽後可離線使用，資料只存於你的瀏覽器。
+- **下載：**每個 [release](https://github.com/Kinfxhk/shiftknit/releases) 都附有靜態網站 zip 及 SHA-256。
 - **在自己電腦執行**（Node.js 22 或以上）：見上方英文部分的指令（`npm ci`、`npm start`）。
 - **使用說明：**[docs/guide.zh-Hant.md](docs/guide.zh-Hant.md)；香港休息日預設：
   [docs/hk-rest-day.md](docs/hk-rest-day.md)。
