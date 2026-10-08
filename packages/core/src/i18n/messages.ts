@@ -87,6 +87,16 @@ const en = {
   'explain.period': '(shown for {start} to {end})',
   'explain.notMinimal': 'This list may contain more rules than necessary.',
   'explain.minimal': 'Removing or relaxing any one of these rules resolves this conflict.',
+  'csv.staff': 'Staff',
+  'csv.date': 'Date',
+  'csv.shift': 'Shift',
+  'csv.start': 'Start',
+  'csv.end': 'End',
+  'csv.break': 'Break (min)',
+  'csv.worked': 'Worked (h)',
+  'csv.need': 'Needed',
+  'csv.have': 'Assigned',
+  'csv.skills': 'Skills',
 };
 
 type Catalogue = Record<keyof typeof en, string>;
@@ -173,6 +183,16 @@ const zhHK: Catalogue = {
   'explain.period': '（顯示期間：{start} 至 {end}）',
   'explain.notMinimal': '此列表可能包含多於必要的規則。',
   'explain.minimal': '刪除或放寬其中任何一條規則，即可解決此衝突。',
+  'csv.staff': '員工',
+  'csv.date': '日期',
+  'csv.shift': '更份',
+  'csv.start': '開始',
+  'csv.end': '結束',
+  'csv.break': '休息（分鐘）',
+  'csv.worked': '工時（小時）',
+  'csv.need': '需要人數',
+  'csv.have': '已排人數',
+  'csv.skills': '技能',
 };
 
 export const MESSAGES = { en, 'zh-HK': zhHK } as const;

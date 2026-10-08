@@ -70,7 +70,7 @@ export function randomProject(seed: number, size: Size): Project {
       id: `p${s}`,
       name: `Person ${s}`,
       skills: skills.filter(() => r.chance(50)),
-      maxConsecutiveDays: 1 + r.int(D + 1),
+      maxConsecutiveDays: Math.min(31, 1 + r.int(D + 1)),
       maxWeeklyMinutes: maxW,
       minWeeklyMinutes: minW,
       availability: r.chance(30)
