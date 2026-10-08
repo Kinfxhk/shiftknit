@@ -60,7 +60,7 @@ describe('conflict explanations', () => {
     const types = e.units.map((u) => u.type).sort();
     expect(types).toEqual(['leave', 'lock', 'skill']);
     const text = e.units.map((u) => describeUnit('en', u, p)).join(' ');
-    expect(text).toContain('Night on 2026-11-03 needs 2 people with firstaid.');
+    expect(text).toContain('Night on 2026-11-03 needs 2 staff with firstaid.');
     expect(text).toContain('Bo is on leave on 2026-11-03.');
     expect(text).toContain('Ed is locked to Day on 2026-11-03.');
     for (const lang of LANGS)

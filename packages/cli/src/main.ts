@@ -166,7 +166,7 @@ export function run(argv: string[], io: Io): number {
         for (const g of v.report?.gaps ?? []) lines.push(`gap: ${describeGap(lang, g, p)}`);
         if (expl) {
           lines.push(
-            `conflict (${expl.start}, ${expl.days} days${expl.minimal ? ', minimal' : ''}):`,
+            `conflict (from ${expl.start}, ${expl.days} day${expl.days === 1 ? '' : 's'}${expl.minimal ? ', minimal' : ''}):`,
           );
           for (const u of expl.units) lines.push(`  - ${describeUnit(lang, u, p, expl.goal)}`);
         }

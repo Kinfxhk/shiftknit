@@ -1,0 +1,81 @@
+{
+  "schema": "shiftknit/project",
+  "version": 1,
+  "name": "Riverside Food Bank volunteers (sample)",
+  "timeZone": "Europe/London",
+  "start": "2026-10-19",
+  "days": 14,
+  "skills": ["driver", "keyholder"],
+  "shifts": [
+    {
+      "id": "sort",
+      "name": "Evening sorting",
+      "start": "18:00",
+      "end": "21:00",
+      "breakMinutes": 0,
+      "demand": [0, 3, 0, 3, 0, 0, 0],
+      "skillDemand": [{ "skills": ["keyholder"], "min": 1 }]
+    },
+    {
+      "id": "collect",
+      "name": "Supermarket collection",
+      "start": "08:00",
+      "end": "11:00",
+      "breakMinutes": 0,
+      "demand": [0, 0, 0, 0, 0, 2, 0],
+      "skillDemand": [{ "skills": ["driver"], "min": 1 }]
+    },
+    {
+      "id": "hand",
+      "name": "Saturday hand-out",
+      "start": "11:00",
+      "end": "15:00",
+      "breakMinutes": 15,
+      "demand": [0, 0, 0, 0, 0, 4, 0],
+      "skillDemand": [{ "skills": ["keyholder"], "min": 1 }]
+    }
+  ],
+  "rules": { "minRestMinutes": 0 },
+  "weights": { "fairHours": 2 },
+  "staff": [
+    { "id": "v01", "name": "Volunteer 1", "skills": ["keyholder"], "maxWeeklyMinutes": 420 },
+    { "id": "v02", "name": "Volunteer 2", "skills": ["driver"], "maxWeeklyMinutes": 360 },
+    {
+      "id": "v03",
+      "name": "Volunteer 3",
+      "skills": ["driver", "keyholder"],
+      "maxWeeklyMinutes": 420
+    },
+    { "id": "v04", "name": "Volunteer 4", "skills": [], "maxWeeklyMinutes": 240 },
+    {
+      "id": "v05",
+      "name": "Volunteer 5",
+      "skills": [],
+      "maxWeeklyMinutes": 360,
+      "availability": [{ "days": [5], "from": "08:00", "to": "16:00" }]
+    },
+    {
+      "id": "v06",
+      "name": "Volunteer 6",
+      "skills": ["keyholder"],
+      "maxWeeklyMinutes": 360,
+      "leave": ["2026-10-24"]
+    },
+    { "id": "v07", "name": "Volunteer 7", "skills": [], "maxWeeklyMinutes": 240 },
+    {
+      "id": "v08",
+      "name": "Volunteer 8",
+      "skills": ["driver"],
+      "maxWeeklyMinutes": 360,
+      "preferences": [{ "kind": "want", "shift": "collect", "weekday": 5, "weight": 3 }]
+    },
+    { "id": "v09", "name": "Volunteer 9", "skills": [], "maxWeeklyMinutes": 300 },
+    {
+      "id": "v10",
+      "name": "Volunteer 10",
+      "skills": [],
+      "maxWeeklyMinutes": 300,
+      "availability": [{ "days": [1, 3], "from": "17:00", "to": "22:00" }]
+    }
+  ]
+}

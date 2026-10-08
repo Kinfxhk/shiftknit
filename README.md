@@ -22,6 +22,23 @@ conflict it found).
 - English and Traditional Chinese.
 - Licence: [AGPL-3.0-or-later](LICENSE).
 
+### Use it
+
+- **In the browser:** the web version will be linked here when v0.1.0 is released.
+  It works offline after the first visit.
+- **On your own computer** (Node.js 22+):
+
+```sh
+npm ci
+npm start   # http://127.0.0.1:4883/
+```
+
+- **Guide:** [docs/guide.md](docs/guide.md) · rules, result labels, "why this rota",
+  exports, command line. Hong Kong rest-day preset: [docs/hk-rest-day.md](docs/hk-rest-day.md).
+- **Examples:** [examples/](examples/) (small café, care home with night shifts,
+  volunteer team across a clock change).
+- How the solver and checker work: [docs/solver.md](docs/solver.md).
+
 ### Important
 
 - **Not legal advice.** "Passes all checks" only means the rota follows the rules
@@ -49,6 +66,14 @@ If ShiftKnit helps you, you can support it at
 - 無需帳戶、無伺服器、無遙測、不按人頭收費；資料只存於你的瀏覽器。
 - 提供英文及繁體中文介面。
 - 授權：[AGPL-3.0-or-later](LICENSE)。
+
+### 使用方法
+
+- **瀏覽器：**v0.1.0 發佈後會在此列出網上版連結，首次瀏覽後可離線使用。
+- **在自己電腦執行**（Node.js 22 或以上）：見上方英文部分的指令（`npm ci`、`npm start`）。
+- **使用說明：**[docs/guide.zh-Hant.md](docs/guide.zh-Hant.md)；香港休息日預設：
+  [docs/hk-rest-day.md](docs/hk-rest-day.md)。
+- **範例：**[examples/](examples/)（小型咖啡店、設夜更的安老院、義工隊）。
 
 ### 重要事項
 

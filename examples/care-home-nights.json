@@ -1,0 +1,64 @@
+{
+  "schema": "shiftknit/project",
+  "version": 1,
+  "name": "Hillside Care Home (sample)",
+  "timeZone": "Asia/Hong_Kong",
+  "start": "2026-11-02",
+  "days": 14,
+  "skills": ["nurse", "first aid"],
+  "shifts": [
+    {
+      "id": "day",
+      "name": "Day",
+      "start": "07:00",
+      "end": "19:00",
+      "breakMinutes": 60,
+      "demand": [3, 3, 3, 3, 3, 3, 3],
+      "skillDemand": [
+        { "skills": ["nurse"], "min": 1 },
+        { "skills": ["first aid"], "min": 2 }
+      ]
+    },
+    {
+      "id": "night",
+      "name": "Night",
+      "start": "19:00",
+      "end": "07:00",
+      "breakMinutes": 60,
+      "demand": [2, 2, 2, 2, 2, 2, 2],
+      "skillDemand": [{ "skills": ["nurse"], "min": 1 }]
+    }
+  ],
+  "staff": [
+    { "id": "n1", "name": "Nurse A", "skills": ["nurse", "first aid"], "maxWeeklyMinutes": 2640 },
+    { "id": "n2", "name": "Nurse B", "skills": ["nurse", "first aid"], "maxWeeklyMinutes": 2640 },
+    { "id": "n3", "name": "Nurse C", "skills": ["nurse", "first aid"], "maxWeeklyMinutes": 2640 },
+    {
+      "id": "n4",
+      "name": "Nurse D",
+      "skills": ["nurse", "first aid"],
+      "maxWeeklyMinutes": 2640,
+      "leave": ["2026-11-05", "2026-11-06"]
+    },
+    {
+      "id": "n5",
+      "name": "Nurse E",
+      "skills": ["nurse"],
+      "maxWeeklyMinutes": 2640,
+      "preferences": [{ "kind": "avoid", "shift": "day", "weight": 2 }]
+    },
+    { "id": "c1", "name": "Carer F", "skills": ["first aid"], "maxWeeklyMinutes": 2640 },
+    { "id": "c2", "name": "Carer G", "skills": ["first aid"], "maxWeeklyMinutes": 2640 },
+    { "id": "c3", "name": "Carer H", "skills": ["first aid"], "maxWeeklyMinutes": 2640 },
+    { "id": "c4", "name": "Carer I", "skills": [], "maxWeeklyMinutes": 2640 },
+    {
+      "id": "c5",
+      "name": "Carer J",
+      "skills": [],
+      "maxWeeklyMinutes": 2640,
+      "preferences": [{ "kind": "avoid", "shift": "night", "weight": 3 }]
+    },
+    { "id": "c6", "name": "Carer K", "skills": ["first aid"], "maxWeeklyMinutes": 2640 },
+    { "id": "c7", "name": "Carer L", "skills": [], "maxWeeklyMinutes": 1980 }
+  ]
+}

@@ -25,7 +25,7 @@ const en = {
   'setup.restMode.rolling': 'any 7 days in a row (stricter)',
   'setup.restMode.fixed': 'fixed 7-day blocks from the first day',
   'setup.restDayNote':
-    'This preset follows the wording of section 15 of the Hong Kong Employment Ordinance. It is not legal advice: check your own obligations.',
+    'This preset follows the Labour Department’s Concise Guide to the Employment Ordinance (chapter 4, rest days). It is not legal advice: check your own obligations.',
   'setup.skills': 'Skills (comma separated)',
   'setup.new': 'New project',
   'setup.sample': 'Load sample',
@@ -163,7 +163,7 @@ const zh: Catalogue = {
   'setup.restMode.rolling': '任何連續 7 日（較嚴格）',
   'setup.restMode.fixed': '由第一日起每 7 日為一期',
   'setup.restDayNote':
-    '此預設依照香港《僱傭條例》第 15 條的字眼設定，並非法律意見，請自行確認你的責任。',
+    '此預設依照勞工處《僱傭條例簡明指南》第四章（休息日）設定，並非法律意見，請自行確認你的責任。',
   'setup.skills': '技能（以逗號分隔）',
   'setup.new': '新項目',
   'setup.sample': '載入示例',
