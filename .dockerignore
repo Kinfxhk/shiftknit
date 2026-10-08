@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.vitest
+coverage
+test-results
+playwright-report
+release
+.env
+.env.*
+docs/screenshot.png

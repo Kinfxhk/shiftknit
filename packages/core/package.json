@@ -1,0 +1,12 @@
+{
+  "name": "@shiftknit/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ShiftKnit core: data model, time zone maths, independent rule checker, solver, CSV/ICS/JSON I/O. Pure functions, zero runtime dependencies.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@shiftknit/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ShiftKnit command line (solve, check) and loopback static server.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "dependencies": {
+    "@shiftknit/core": "*"
+  }
+}

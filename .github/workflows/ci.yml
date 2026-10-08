@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITLEAKS_VERSION: 8.30.1
+
+jobs:
+  check:
+    # Every milestone must be green on Linux AND Windows (and on Node 22 and 24).
+    name: check (${{ matrix.os }}, node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history for the secret scan
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check (LF checkout via .gitattributes)
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit, property, oracle and golden tests
+        run: npm test
+
+      - name: Tests under other time zones (results must not depend on the machine zone)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          TZ=America/New_York npx vitest run packages/core/test
+          TZ=Asia/Tokyo npx vitest run packages/core/test
+
+      - name: Dependency licence check (AGPL-3.0 compatible allowlist)
+        run: npm run check:licenses
+
+      - name: Repository hygiene
+        run: npm run check:hygiene
+
+      - name: Install gitleaks (Linux; pinned, checksum-verified)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "${base}/${tarball}"
+          curl -sSfL "${base}/gitleaks_${GITLEAKS_VERSION}_checksums.txt" | grep " ${tarball}\$" | sha256sum -c -
+          tar -xzf "${tarball}" gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          rm -f "${tarball}"
+
+      - name: Secret scan (gitleaks on Linux; clearly labelled FALLBACK on Windows)
+        run: npm run check:secrets

@@ -1,0 +1,10 @@
+LICENSE
+node_modules
+dist
+coverage
+release
+package-lock.json
+**/__snapshots__/**
+test-results
+playwright-report
+test/scripts/fixtures

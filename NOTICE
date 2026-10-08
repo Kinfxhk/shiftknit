@@ -1,0 +1,23 @@
+ShiftKnit (排更易)
+Copyright (C) 2026 ShiftKnit contributors
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. See the LICENSE file for the full text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+ShiftKnit checks rotas only against the rules that you enter. "Passes all
+checks" does not mean that a rota complies with any law, contract or collective
+agreement. The Hong Kong rest-day preset quotes a public Labour Department
+document for convenience; it is not legal advice. Employers remain responsible
+for checking their own obligations.
+
+ShiftKnit is an independent project. It is not affiliated with, endorsed by,
+or sponsored by any other scheduling product or company. All product names are
+trademarks of their respective owners.
+
+Third-party components and their notices are listed in THIRD_PARTY_NOTICES.md.

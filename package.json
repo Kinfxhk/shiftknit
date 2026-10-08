@@ -1,0 +1,52 @@
+{
+  "name": "shiftknit-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ShiftKnit (排更易): free, offline, open-source staff rota builder. Every rota is checked rule by rule by an independent checker.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/cli",
+    "packages/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @shiftknit/web",
+    "build": "npm run build -w @shiftknit/web",
+    "start": "npm run build && npm run serve",
+    "serve": "node --import tsx packages/cli/src/serve.ts",
+    "shiftknit": "node --import tsx packages/cli/src/main.ts",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npm run build && playwright test",
+    "screenshot": "node scripts/screenshot.mjs",
+    "package:site": "node scripts/package-site.mjs",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "check:secrets": "node scripts/secret-scan.mjs",
+    "check:hygiene": "node scripts/check-hygiene.mjs",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm test && npm run check:licenses && npm run check:hygiene && npm run check:secrets",
+    "release:notes": "node scripts/release-notes.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.4",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.10.2",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  }
+}

@@ -1,0 +1,5 @@
+// Deliberately wrong: these assertions only pass on one operating system.
+expect(out).toBe('packages/core/src/index.ts');
+expect(file).toEqual("C:\\Users\\me\\project.json");
+expect(log).toContain('./examples/shop.json');
+expect(p.endsWith('dist/index.html')).toBe(true);

@@ -1,0 +1,7 @@
+// Fine: built with node:path, URLs, dates, routes.
+expect(out).toBe(join('packages', 'core', 'src', 'index.ts'));
+expect(url).toBe('https://github.com/Kinfxhk/shiftknit');
+expect(route).toBe('/healthz');
+expect(date).toBe('10/08');
+expect(text).toContain('a / b');
+expect(posix).toBe('packages/core/src/index.ts'); // path-ok: POSIX-normalised on purpose
