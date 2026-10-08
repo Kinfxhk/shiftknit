@@ -8,3 +8,4 @@ package-lock.json
 test-results
 playwright-report
 test/scripts/fixtures
+packages/core/src/check-mutant-*

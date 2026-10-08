@@ -51,6 +51,7 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
+          paths: ['..', '../', '../index', '../index.ts', '../api', '../api.ts'],
           patterns: [
             'node:*',
             'fs',
@@ -59,8 +60,6 @@ export default tseslint.config(
             '**/solve/**',
             '**/explain',
             '**/explain/**',
-            '**/api',
-            '**/index',
           ],
         },
       ],

@@ -35,6 +35,38 @@ const en = {
   'error.pref.dateAndWeekday': 'use either a date or a weekday, not both.',
   'error.date.outsidePeriod': 'this date is outside the rota period.',
   'error.cell.duplicate': 'this person and date appear more than once.',
+  'unit.hm': '{h} h {m} min',
+  'unit.h': '{h} h',
+  'violation.availability': '{staff} is not available for {shift} on {date}.',
+  'violation.leave': '{staff} is on leave on {otherDate}, but {shift} on {date} overlaps it.',
+  'violation.overlap': '{staff}: {shift} on {date} overlaps {otherShift} on {otherDate}.',
+  'violation.rest':
+    '{staff}: only {value} of rest between {otherShift} ({otherDate}) and {shift} ({date}); at least {limit} needed.',
+  'violation.weeklyMax':
+    '{staff} works {value} in the week starting {date}; the maximum is {limit}.',
+  'violation.weeklyMin':
+    '{staff} works {value} in the week starting {date}; the minimum is {limit}.',
+  'violation.consecutive':
+    '{staff} works {value} days in a row up to {date}; the maximum is {limit}.',
+  'violation.restDay':
+    '{staff} has {value} rest day(s) in the 7 days from {date}; {limit} needed (each a continuous break of {restLength}).',
+  'violation.overstaffed': '{shift} on {date} has {value} people but needs only {limit}.',
+  'violation.lock': '{staff} on {date} is locked to {shift}.',
+  'violation.lockOff': '{staff} on {date} is locked as a day off.',
+  'violation.structure': 'Invalid entry: {staff} / {date} / {shift}.',
+  'gap.staff': '{shift} on {date}: {have} of {need} people.',
+  'gap.skill': '{shift} on {date}: {have} of {need} people with {skills}.',
+  'rule.availability': 'Availability',
+  'rule.leave': 'Leave',
+  'rule.overlap': 'No overlapping shifts',
+  'rule.rest': 'Rest between shifts',
+  'rule.weeklyMax': 'Maximum weekly hours',
+  'rule.weeklyMin': 'Minimum weekly hours',
+  'rule.consecutive': 'Maximum days in a row',
+  'rule.restDay': 'Rest days',
+  'rule.overstaffed': 'No more people than needed',
+  'rule.lock': 'Locked cells',
+  'rule.structure': 'Valid entries',
 };
 
 type Catalogue = Record<keyof typeof en, string>;
@@ -72,6 +104,35 @@ const zhHK: Catalogue = {
   'error.pref.dateAndWeekday': '請只填日期或星期其中一項。',
   'error.date.outsidePeriod': '此日期不在排更期間內。',
   'error.cell.duplicate': '同一員工同一日期出現多於一次。',
+  'unit.hm': '{h} 小時 {m} 分鐘',
+  'unit.h': '{h} 小時',
+  'violation.availability': '{staff} 於 {date} 不能上「{shift}」。',
+  'violation.leave': '{staff} 於 {otherDate} 請假，但 {date} 的「{shift}」與假期重疊。',
+  'violation.overlap': '{staff}：{date} 的「{shift}」與 {otherDate} 的「{otherShift}」時間重疊。',
+  'violation.rest':
+    '{staff}：{otherDate}「{otherShift}」與 {date}「{shift}」之間只休息 {value}，最少需要 {limit}。',
+  'violation.weeklyMax': '{staff} 在 {date} 開始的一週工作 {value}，上限為 {limit}。',
+  'violation.weeklyMin': '{staff} 在 {date} 開始的一週工作 {value}，下限為 {limit}。',
+  'violation.consecutive': '{staff} 連續工作 {value} 日（至 {date}），上限為 {limit} 日。',
+  'violation.restDay':
+    '{staff} 在 {date} 起的 7 日內只有 {value} 個休息日，需要 {limit} 個（每個為連續 {restLength} 不用工作）。',
+  'violation.overstaffed': '{date} 的「{shift}」排了 {value} 人，只需要 {limit} 人。',
+  'violation.lock': '{staff} 於 {date} 已鎖定為「{shift}」。',
+  'violation.lockOff': '{staff} 於 {date} 已鎖定為休息。',
+  'violation.structure': '無效項目：{staff}／{date}／{shift}。',
+  'gap.staff': '{date} 的「{shift}」：{need} 人中只有 {have} 人。',
+  'gap.skill': '{date} 的「{shift}」：需要 {need} 名具備{skills}的人員，只有 {have} 名。',
+  'rule.availability': '可工作時段',
+  'rule.leave': '請假',
+  'rule.overlap': '更份不可重疊',
+  'rule.rest': '兩更之間的休息',
+  'rule.weeklyMax': '每週工時上限',
+  'rule.weeklyMin': '每週工時下限',
+  'rule.consecutive': '最多連續工作日',
+  'rule.restDay': '休息日',
+  'rule.overstaffed': '人數不可多於需要',
+  'rule.lock': '鎖定格子',
+  'rule.structure': '有效項目',
 };
 
 export const MESSAGES = { en, 'zh-HK': zhHK } as const;

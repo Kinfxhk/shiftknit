@@ -11,3 +11,4 @@ release/
 .vitest/
 test-results/
 playwright-report/
+packages/core/src/check-mutant-*/

@@ -24,3 +24,4 @@ export function describeError(
 }
 
 export { MESSAGES };
+export { describeGap, describeViolation, formatMinutes } from './describe';

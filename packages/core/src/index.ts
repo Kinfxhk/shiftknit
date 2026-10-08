@@ -3,3 +3,4 @@ export { ENGINE_VERSION } from './version';
 export * from './model/index';
 export * from './time/index';
 export * from './i18n/index';
+export * from './check/index';

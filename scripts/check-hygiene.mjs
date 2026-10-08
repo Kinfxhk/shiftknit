@@ -76,7 +76,10 @@ for (const f of files.filter((x) => /^docs\/.*\.md$/.test(x))) {
 // --- The checker must not import the solver. ----------------------------------------------
 for (const f of files.filter((x) => /^packages\/core\/src\/check\/.*\.ts$/.test(x))) {
   for (const m of read(f).matchAll(/from\s+['"]([^'"]+)['"]/g)) {
-    if (/(^|\/)(solve|explain|api|index)(\/|\.ts$|$)/.test(m[1]))
+    if (
+      /(^|\/)(solve|explain|api)(\/|\.ts$|$)/.test(m[1]) ||
+      /^\.\.(\/index(\.ts)?)?\/?$/.test(m[1])
+    )
       problems.push(`${f}: the independent checker must not import "${m[1]}"`);
   }
 }
