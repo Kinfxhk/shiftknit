@@ -293,3 +293,20 @@ describe('message catalogue', () => {
     for (const code of used) expect(MESSAGES.en, code).toHaveProperty([`error.${code}`]);
   });
 });
+
+describe('skill names', () => {
+  it('accept labels in any script and reject markup or control characters', async () => {
+    const { validateProject } = await import('../src/index');
+    const { rawProject } = await import('./helpers/fixtures');
+    for (const ok of ['急救', 'first aid', 'Erste-Hilfe', 'pharmacist_2', 'café']) {
+      const r = validateProject(
+        rawProject({ skills: [ok], staff: [{ id: 'a', name: 'A', skills: [ok] }] }),
+      );
+      expect(r.ok, ok).toBe(true);
+    }
+    for (const bad of ['', ' lead', 'a<b>', 'x\ny', 'a'.repeat(41), '=1+1']) {
+      const r = validateProject(rawProject({ skills: [bad], staff: [{ id: 'a', name: 'A' }] }));
+      expect(r.ok, JSON.stringify(bad)).toBe(false);
+    }
+  });
+});

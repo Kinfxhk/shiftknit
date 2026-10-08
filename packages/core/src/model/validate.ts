@@ -24,6 +24,8 @@ import type {
 import { PROJECT_SCHEMA, PROJECT_VERSION } from './types';
 
 const ID_RE = /^[A-Za-z0-9_-]+$/;
+/** Skill names are labels people type (any script): letters, digits, space, - and _. */
+const SKILL_RE = /^[\p{L}\p{N}](?:[\p{L}\p{N}\p{M} _-]*[\p{L}\p{N}\p{M}])?$/u;
 // eslint-disable-next-line no-control-regex
 const CONTROL_RE = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
 
@@ -69,6 +71,12 @@ class Ctx {
     if (s && !ID_RE.test(s)) this.err('field.pattern', path);
     return s;
   }
+  skill(v: unknown, path: string): string {
+    const s = this.str(v, path, 40);
+    if (s && !SKILL_RE.test(s)) this.err('field.skillName', path);
+    return s;
+  }
+
   int(v: unknown, path: string, min: number, max: number): number {
     if (typeof v !== 'number') {
       this.err('field.type', path, { expected: 'number' });
@@ -110,7 +118,7 @@ class Ctx {
 function readSkillReq(c: Ctx, v: unknown, path: string): SkillRequirement {
   const o = c.obj(v, path, ['skills', 'min']) ?? {};
   const skills = (c.arr(o.skills, `${path}.skills`, LIMITS.skills, 'skills') ?? []).map((s, i) =>
-    c.id(s, `${path}.skills[${i}]`),
+    c.skill(s, `${path}.skills[${i}]`),
   );
   if (skills.length === 0) c.err('field.required', `${path}.skills`);
   return { skills, min: c.int(o.min, `${path}.min`, 1, LIMITS.maxDemand) };
@@ -205,7 +213,7 @@ function readStaff(c: Ctx, v: unknown, path: string): Staff {
     id: c.id(o.id, `${path}.id`),
     name: c.str(o.name, `${path}.name`, LIMITS.nameLength),
     skills: (c.arr(o.skills ?? [], `${path}.skills`, LIMITS.skills, 'skills') ?? []).map((x, i) =>
-      c.id(x, `${path}.skills[${i}]`),
+      c.skill(x, `${path}.skills[${i}]`),
     ),
     maxWeeklyMinutes: c.opt(
       o,
@@ -335,7 +343,7 @@ export function validateProject(raw: unknown): Result<Project> {
   const timeZone = c.opt(o, 'timeZone', 'Asia/Hong_Kong', (x, p) => c.str(x, p, 64), '$');
   if (!isValidTimeZone(timeZone)) c.err('field.timeZone', '$.timeZone');
   const skills = (c.arr(o.skills ?? [], '$.skills', LIMITS.skills, 'skills') ?? []).map((x, i) =>
-    c.id(x, `$.skills[${i}]`),
+    c.skill(x, `$.skills[${i}]`),
   );
   const shiftsRaw = c.arr(o.shifts, '$.shifts', LIMITS.shifts, 'shifts') ?? [];
   const staffRaw = c.arr(o.staff, '$.staff', LIMITS.staff, 'staff') ?? [];
@@ -431,9 +439,12 @@ export function validateRoster(raw: unknown, project: Project): Result<Roster> {
   const graphErrors = inspectGraph(raw);
   if (graphErrors.length) return { ok: false, errors: graphErrors };
   const c = new Ctx();
-  let o = c.obj(raw, '$', ['schema', 'version', 'assignments', 'roster', 'status', 'result']);
-  // Accept a bare roster or a solver result that embeds one.
-  if (o && o.roster !== undefined) o = c.obj(o.roster, '$.roster', ['assignments']);
+  // Accept a bare roster ({schema?, version?, assignments}) or a solver result file that
+  // embeds one under "roster" (its other fields are ignored here).
+  const embeds = typeof raw === 'object' && raw !== null && !Array.isArray(raw) && 'roster' in raw;
+  const o = embeds
+    ? c.obj((raw as { roster: unknown }).roster, '$.roster', ['assignments'])
+    : c.obj(raw, '$', ['schema', 'version', 'assignments']);
   const list = c.arr(o?.assignments, '$.assignments', LIMITS.assignments, 'assignments') ?? [];
   const shifts = new Set(project.shifts.map((s) => s.id));
   const staff = new Set(project.staff.map((s) => s.id));

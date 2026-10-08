@@ -21,6 +21,8 @@ const en = {
   'error.field.tooLong': 'too long (limit {max} characters).',
   'error.field.control': 'contains control characters.',
   'error.field.pattern': 'IDs may only use letters A–Z, digits, "-" and "_".',
+  'error.field.skillName':
+    'Skill names may use letters (any language), digits, spaces, "-" and "_" (up to 40 characters).',
   'error.field.date': 'must be a real date written as YYYY-MM-DD.',
   'error.field.time': 'must be a time written as HH:MM (00:00–23:59).',
   'error.field.timeZone': 'unknown time zone; use an IANA name such as Asia/Hong_Kong.',
@@ -120,6 +122,8 @@ const zhHK: Catalogue = {
   'error.field.tooLong': '太長（上限 {max} 個字元）。',
   'error.field.control': '包含控制字元。',
   'error.field.pattern': '代號只可使用英文字母、數字、「-」及「_」。',
+  'error.field.skillName':
+    '技能名稱可使用任何語言的文字、數字、空格、「-」及「_」（最多 40 個字元）。',
   'error.field.date': '必須是真實日期，格式為 YYYY-MM-DD。',
   'error.field.time': '必須是時間，格式為 HH:MM（00:00–23:59）。',
   'error.field.timeZone': '未知時區；請使用 IANA 名稱，例如 Asia/Hong_Kong。',

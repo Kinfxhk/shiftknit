@@ -4,6 +4,14 @@
   "version": "0.1.0",
   "description": "ShiftKnit (排更易): free, offline, open-source staff rota builder. Every rota is checked rule by rule by an independent checker.",
   "license": "AGPL-3.0-or-later",
+  "homepage": "https://kinfxhk.github.io/shiftknit/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kinfxhk/shiftknit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Kinfxhk/shiftknit/issues"
+  },
   "type": "module",
   "workspaces": [
     "packages/core",

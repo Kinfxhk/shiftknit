@@ -1,0 +1,11 @@
+{
+  "name": "ShiftKnit · 排更易",
+  "short_name": "ShiftKnit",
+  "description": "Free, offline staff rota builder. Every rota is checked rule by rule.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#1f5f5b",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

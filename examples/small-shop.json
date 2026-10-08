@@ -1,0 +1,60 @@
+{
+  "schema": "shiftknit/project",
+  "version": 1,
+  "name": "Harbour Café (sample)",
+  "timeZone": "Asia/Hong_Kong",
+  "start": "2026-11-02",
+  "days": 14,
+  "skills": ["keyholder", "barista"],
+  "shifts": [
+    {
+      "id": "open",
+      "name": "Opening",
+      "start": "07:00",
+      "end": "15:00",
+      "breakMinutes": 30,
+      "demand": [2, 2, 2, 2, 2, 3, 3],
+      "skillDemand": [{ "skills": ["keyholder"], "min": 1 }]
+    },
+    {
+      "id": "close",
+      "name": "Closing",
+      "start": "14:00",
+      "end": "22:00",
+      "breakMinutes": 30,
+      "demand": [2, 2, 2, 2, 3, 3, 2],
+      "skillDemand": [
+        { "skills": ["keyholder"], "min": 1 },
+        { "skills": ["barista"], "min": 1 }
+      ]
+    }
+  ],
+  "staff": [
+    { "id": "ada", "name": "Ada", "skills": ["keyholder", "barista"], "maxWeeklyMinutes": 2880 },
+    { "id": "ben", "name": "Ben", "skills": ["barista"], "maxWeeklyMinutes": 2880 },
+    { "id": "chloe", "name": "Chloe", "skills": ["keyholder"], "maxWeeklyMinutes": 2880 },
+    {
+      "id": "dev",
+      "name": "Dev",
+      "skills": ["keyholder"],
+      "maxWeeklyMinutes": 2880,
+      "leave": ["2026-11-09", "2026-11-10"]
+    },
+    { "id": "ema", "name": "Ema", "skills": ["barista"], "maxWeeklyMinutes": 2880 },
+    {
+      "id": "fai",
+      "name": "Fai",
+      "skills": ["keyholder", "barista"],
+      "maxWeeklyMinutes": 1440,
+      "preferences": [{ "kind": "avoid", "weekday": 6, "weight": 3 }]
+    },
+    {
+      "id": "gus",
+      "name": "Gus",
+      "skills": [],
+      "maxWeeklyMinutes": 1200,
+      "availability": [{ "days": [4, 5, 6], "from": "07:00", "to": "23:00" }],
+      "preferences": [{ "kind": "want", "shift": "close", "weekday": 5, "weight": 2 }]
+    }
+  ]
+}
