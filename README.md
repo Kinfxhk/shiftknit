@@ -8,6 +8,8 @@
 
 **English** · [繁體中文](#繁體中文)
 
+![ShiftKnit: a two-week café rota in the staff × days grid, with the rule check passed](docs/screenshot.png)
+
 ShiftKnit is a free, open-source, offline staff rota builder for small shops,
 restaurants, clinics, care homes, NGOs and volunteer teams. It builds a rota
 automatically from your rules (availability, leave, minimum rest between shifts,
@@ -31,6 +33,13 @@ conflict it found).
 ```sh
 npm ci
 npm start   # http://127.0.0.1:4883/
+```
+
+- **Docker** (serves only the static site, on your own machine):
+
+```sh
+docker build -t shiftknit .
+docker run --rm -p 127.0.0.1:4883:4883 shiftknit
 ```
 
 - **Guide:** [docs/guide.md](docs/guide.md) · rules, result labels, "why this rota",

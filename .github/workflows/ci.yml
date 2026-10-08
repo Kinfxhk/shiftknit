@@ -80,6 +80,20 @@ jobs:
       - name: Secret scan (gitleaks on Linux; clearly labelled FALLBACK on Windows)
         run: npm run check:secrets
 
+      - name: Build the static site and package it reproducibly (two builds, same SHA-256)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          npm run package:site
+          first=$(cut -d' ' -f1 release/shiftknit-site-v*.zip.sha256)
+          npm run build
+          npm run package:site
+          second=$(cut -d' ' -f1 release/shiftknit-site-v*.zip.sha256)
+          echo "first: $first"
+          echo "second: $second"
+          test "$first" = "$second"
+
   e2e:
     # Headless browser tests (Chromium) on Linux AND Windows: create → solve → hand edit →
     # live warning → ICS; offline reload; zero external requests; no console/CSP errors;
@@ -112,3 +126,42 @@ jobs:
           name: playwright-${{ matrix.os }}
           path: test-results/
           retention-days: 7
+
+  docker:
+    # The container only serves the static site; check it builds and answers /healthz.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build container image
+        run: docker build --pull -t shiftknit:ci .
+
+      - name: Run container and wait for the health endpoint
+        run: |
+          set -euo pipefail
+          docker run -d --name shiftknit-ci -p 127.0.0.1:4883:4883 shiftknit:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4883/healthz; then
+              echo "Container is healthy."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Container did not become healthy in time." >&2
+          docker logs shiftknit-ci >&2
+          exit 1
+
+      - name: Home page, worker and service worker are served (HTTP 200)
+        run: |
+          set -euo pipefail
+          for path in / /sw.js /manifest.webmanifest /licenses/ShiftKnit-LICENSE.txt; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:4883${path}")
+            echo "${path}: HTTP $code"
+            test "$code" = 200
+          done
+          curl -fsS http://127.0.0.1:4883/ | grep -q 'id="source-link"'
+
+      - name: Container logs
+        if: always()
+        run: docker logs shiftknit-ci || true
