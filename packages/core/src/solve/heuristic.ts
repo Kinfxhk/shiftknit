@@ -51,7 +51,7 @@ export function greedy(c: Compiled, rng: Rng): Grid {
     for (const { k } of slots) {
       while (g.count[d * c.K + k]! < c.demand[d * c.K + k]!) {
         // Outstanding skill needs for this slot.
-        const missing = c.skillReqs[k]!.filter((r) => {
+        const missing = c.skillReqs[d * c.K + k]!.filter((r) => {
           let q = 0;
           for (let s = 0; s < c.S; s++)
             if (g.get(s, d) === k + 1 && (c.staffMask[s]! & r.mask) === r.mask) q++;
@@ -152,7 +152,7 @@ export function localSearch(c: Compiled, start: Grid, rng: Rng, budget: Budget):
       if (old === k + 1) continue;
       // Free the slot by removing a random holder when it is full.
       let freed = -1;
-      if (g.count[d * c.K + k]! >= c.demand[d * c.K + k]!) {
+      if (g.count[d * c.K + k]! >= c.cap[d * c.K + k]!) {
         const holders: number[] = [];
         for (let x = 0; x < c.S; x++) if (x !== s && g.get(x, d) === k + 1) holders.push(x);
         if (holders.length === 0) continue;

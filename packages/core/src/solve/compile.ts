@@ -6,6 +6,7 @@
 import type { Project } from '../model/types';
 import {
   dayStart,
+  formatDate,
   parseDate,
   parseTime,
   shiftInterval,
@@ -26,7 +27,10 @@ export interface Compiled {
   ivEnd: number[];
   worked: number[];
   demand: number[];
-  /** Skill requirements per shift: bit mask of skills (person needs all bits) and minimum. */
+  /** Most people allowed on a slot (normally = demand; relaxed slots are uncapped). */
+  cap: number[];
+  /** Skill requirements per slot d*K + k: bit mask (person needs all bits) and minimum.
+   * Only present on slots with demand > 0, as in the checker. */
   skillReqs: { mask: number; min: number }[][];
   staffMask: number[];
   /** allowed[(s*D + d)*V + v] (v = 0 is always allowed unless locked to a shift). */
@@ -53,7 +57,15 @@ export interface Compiled {
   weights: Project['weights'];
 }
 
-export function compile(p: Project): Compiled {
+/** Internal relaxations used by the conflict explainer (keys use date and ids). */
+export interface Relax {
+  /** "date|shift": staffing need removed (and the slot uncapped). */
+  zeroNeed?: ReadonlySet<string>;
+  /** "date|shift|index": one skill need removed. */
+  zeroSkill?: ReadonlySet<string>;
+}
+
+export function compile(p: Project, relax: Relax = {}): Compiled {
   const tz = p.timeZone;
   const first = parseDate(p.start) ?? 0;
   const S = p.staff.length;
@@ -67,13 +79,27 @@ export function compile(p: Project): Compiled {
   const ivEnd: number[] = [];
   const worked: number[] = [];
   const demand: number[] = [];
+  const cap: number[] = [];
+  const skillReqs: { mask: number; min: number }[][] = [];
   for (let d = 0; d < D; d++)
     for (const sh of p.shifts) {
       const iv = shiftInterval(first + d, parseTime(sh.start) ?? 0, parseTime(sh.end) ?? 0, tz);
       ivStart.push(iv.start);
       ivEnd.push(iv.end);
       worked.push(Math.max(0, iv.end - iv.start - sh.breakMinutes));
-      demand.push(sh.demand[weekday(first + d)] ?? 0);
+      const need = sh.demand[weekday(first + d)] ?? 0;
+      const key = `${formatDate(first + d)}|${sh.id}`;
+      const zero = relax.zeroNeed?.has(key) ?? false;
+      demand.push(zero ? 0 : need);
+      cap.push(zero ? Math.max(S, need) : need);
+      skillReqs.push(
+        need === 0
+          ? []
+          : sh.skillDemand
+              .map((r, j) => ({ mask: maskOf(r.skills), min: r.min, j }))
+              .filter((r) => !(relax.zeroSkill?.has(`${key}|${r.j}`) ?? false))
+              .map(({ mask, min }) => ({ mask, min })),
+      );
     }
 
   const allowed = new Uint8Array(S * D * V);
@@ -188,9 +214,8 @@ export function compile(p: Project): Compiled {
     ivEnd,
     worked,
     demand,
-    skillReqs: p.shifts.map((sh) =>
-      sh.skillDemand.map((r) => ({ mask: maskOf(r.skills), min: r.min })),
-    ),
+    cap,
+    skillReqs,
     staffMask: p.staff.map((s) => maskOf(s.skills)),
     allowed,
     cellCost,

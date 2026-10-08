@@ -22,12 +22,11 @@ export function staticBounds(c: Compiled): number[] {
       let elig = 0;
       for (let s = 0; s < c.S; s++) if (c.allowed[(s * c.D + d) * c.V + k + 1]) elig++;
       slotSum += Math.max(0, need - elig);
-      if (need === 0) continue;
-      for (const r of c.skillReqs[k]!) {
+      for (const r of c.skillReqs[d * c.K + k]!) {
         let q = 0;
         for (let s = 0; s < c.S; s++)
           if (c.allowed[(s * c.D + d) * c.V + k + 1] && (c.staffMask[s]! & r.mask) === r.mask) q++;
-        slotSum += Math.max(0, r.min - Math.min(q, need));
+        slotSum += Math.max(0, r.min - Math.min(q, c.cap[d * c.K + k]!));
       }
     }
     let people = 0;

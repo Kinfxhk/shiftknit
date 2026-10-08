@@ -60,8 +60,7 @@ export function exactSearch(
       const need = c.demand[d * c.K + k]!;
       const have = count[d * c.K + k]!;
       if (have < need) short += need - have;
-      if (need === 0) continue;
-      for (const r of c.skillReqs[k]!) {
+      for (const r of c.skillReqs[d * c.K + k]!) {
         let q = 0;
         for (let s = 0; s < S; s++)
           if (cell[s * D + d] === k + 1 && (c.staffMask[s]! & r.mask) === r.mask) q++;
@@ -125,7 +124,7 @@ export function exactSearch(
         return;
       }
       nodes++;
-      if (v > 0 && count[d * c.K + v - 1]! >= c.demand[d * c.K + v - 1]!) continue;
+      if (v > 0 && count[d * c.K + v - 1]! >= c.cap[d * c.K + v - 1]!) continue;
       cell[s * D + d] = v;
       const row = cell.subarray(s * D, (s + 1) * D);
       // A day off can still complete a rest-day window that ends today.

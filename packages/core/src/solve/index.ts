@@ -9,6 +9,7 @@ import { ENGINE_VERSION } from '../version';
 import { staticBounds } from './bounds';
 import type { Compiled } from './compile';
 import { compile } from './compile';
+import type { Relax } from './compile';
 import { exactSearch } from './exact';
 import { Grid } from './grid';
 import type { Budget } from './heuristic';
@@ -26,6 +27,8 @@ export interface SolveOptions {
   exactBudget?: number;
   /** Optional wall-clock stop, injected by the caller (CLI / web worker). */
   timeUp?: () => boolean;
+  /** Internal: relaxations used by the conflict explainer. */
+  relax?: Relax;
 }
 
 export interface SolveResult {
@@ -74,19 +77,19 @@ function locksConsistent(c: Compiled): boolean {
       if (n === 0) return false; // locked to a value the person cannot take
       if (!c.allowed[base]) for (let v = 1; v < c.V; v++) if (c.allowed[base + v]) g.apply(s, d, v);
     }
-  for (let i = 0; i < c.D * c.K; i++) if (g.count[i]! > c.demand[i]!) return false;
+  for (let i = 0; i < c.D * c.K; i++) if (g.count[i]! > c.cap[i]!) return false;
   for (let s = 0; s < c.S; s++) if (!rowOk(c, s, g.row(s))) return false;
   return true;
 }
 
 export function solve(project: Project, options: SolveOptions = {}): SolveResult {
   const seed = (options.seed ?? 1) >>> 0;
-  const c = compile(project);
+  const c = compile(project, options.relax);
   const bounds = staticBounds(c);
   const shortfallBound = bounds.reduce((a, b) => a + b, 0);
   const cells = c.S * c.D;
   const budget: Budget = {
-    left: options.searchBudget ?? Math.min(400_000, 2_000 + cells * 600),
+    left: options.searchBudget ?? Math.min(1_500_000, 2_000 + cells * 1_500),
     stoppedByTime: false,
     ...(options.timeUp ? { timeUp: options.timeUp } : {}),
   };

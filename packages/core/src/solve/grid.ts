@@ -104,8 +104,7 @@ export class Grid {
       const need = c.demand[d * c.K + k]!;
       const have = this.count[d * c.K + k]!;
       if (have < need) short += need - have;
-      if (need === 0) continue;
-      for (const r of c.skillReqs[k]!) {
+      for (const r of c.skillReqs[d * c.K + k]!) {
         let q = 0;
         for (let s = 0; s < c.S; s++)
           if (this.get(s, d) === k + 1 && (c.staffMask[s]! & r.mask) === r.mask) q++;
@@ -138,7 +137,7 @@ export class Grid {
     if (!c.allowed[(s * c.D + d) * c.V + v]) return false;
     const old = this.get(s, d);
     if (old === v) return true;
-    if (v > 0 && this.count[d * c.K + v - 1]! >= c.demand[d * c.K + v - 1]!) return false;
+    if (v > 0 && this.count[d * c.K + v - 1]! >= c.cap[d * c.K + v - 1]!) return false;
     this.cell[s * c.D + d] = v;
     if (v > 0 && !cellOk(c, s, this.row(s), d)) {
       this.cell[s * c.D + d] = old;
