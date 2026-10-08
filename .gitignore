@@ -12,3 +12,4 @@ release/
 test-results/
 playwright-report/
 packages/core/src/check-mutant-*/
+packages/core/src/solve-mutant-*/

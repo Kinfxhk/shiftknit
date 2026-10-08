@@ -90,8 +90,25 @@ export function isValidTimeZone(tz: string): boolean {
   }
 }
 
-/** UTC offset of `tz` at the instant `epochMin`, in minutes (local = UTC + offset). */
+const offsetCache = new Map<string, Map<number, number>>();
+
+/** UTC offset of `tz` at the instant `epochMin`, in minutes (local = UTC + offset).
+ * Results are memoised per zone (pure function of its inputs). */
 export function offsetAt(epochMin: number, tz: string): number {
+  let cache = offsetCache.get(tz);
+  if (!cache) {
+    cache = new Map();
+    offsetCache.set(tz, cache);
+  }
+  const hit = cache.get(epochMin);
+  if (hit !== undefined) return hit;
+  if (cache.size > 100_000) cache.clear();
+  const off = computeOffset(epochMin, tz);
+  cache.set(epochMin, off);
+  return off;
+}
+
+function computeOffset(epochMin: number, tz: string): number {
   const parts = formatter(tz).formatToParts(new Date(epochMin * MS_PER_MIN));
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? NaN);
   const local = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'));

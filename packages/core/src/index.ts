@@ -4,3 +4,5 @@ export * from './model/index';
 export * from './time/index';
 export * from './i18n/index';
 export * from './check/index';
+export * from './solve/index';
+export * from './api';
